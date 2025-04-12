@@ -1,4 +1,4 @@
-### Chess Game
+# Chess Game
 
 A fully-featured chess game implemented in Python using Pygame. This application provides a complete chess experience with a graphical user interface, standard chess rules, and various gameplay features.
 
