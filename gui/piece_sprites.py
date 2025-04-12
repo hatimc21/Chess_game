@@ -5,7 +5,7 @@ This file contains the PieceSprites class for managing chess piece images.
 
 import pygame
 import os
-
+from gui.theme import colors
 
 class PieceSprites:
     """
@@ -24,7 +24,7 @@ class PieceSprites:
         self.load_sprites()
     
     def load_sprites(self):
-        """Load all chess piece sprites."""
+        """Load all chess piece sprites with modern styling."""
         # Define piece types and colors
         pieces = {
             'P': ['p', 'pawn'],  # Pawn
@@ -79,10 +79,10 @@ class PieceSprites:
                         except pygame.error as e:
                             print(f"Error loading {image_path}: {e}")
                 
-                # If no valid filename was found, create a placeholder
+                # If no valid filename was found, create a modern placeholder
                 if not piece_loaded:
-                    print(f"No sprite found for {color} {piece_type}, creating placeholder")
-                    image = self._create_placeholder_piece(piece_type, color == 'white')
+                    print(f"No sprite found for {color} {piece_type}, creating modern placeholder")
+                    image = self._create_modern_piece(piece_type, color == 'white')
                     
                     # Store the image
                     key = piece_type if color == 'white' else piece_type.lower()
@@ -90,35 +90,175 @@ class PieceSprites:
         
         print(f"Loaded {sprites_loaded} sprites successfully")
     
-    def _create_placeholder_piece(self, piece_type, is_white):
+    def _create_modern_piece(self, piece_type, is_white):
         """
-        Create a placeholder image for a chess piece.
+        Create a modern-looking placeholder image for a chess piece.
         
         Args:
             piece_type (str): The type of piece (P, N, B, R, Q, K)
             is_white (bool): Whether the piece is white
             
         Returns:
-            Surface: A pygame surface with a simple representation of the piece
+            Surface: A pygame surface with a modern representation of the piece
         """
         # Create a surface for the piece
         surface = pygame.Surface((self.square_size, self.square_size), pygame.SRCALPHA)
         
-        # Choose colors
-        bg_color = (200, 200, 200) if is_white else (50, 50, 50)
-        fg_color = (0, 0, 0) if is_white else (255, 255, 255)
+        # Choose colors - more subtle and modern
+        bg_color = (240, 240, 240) if is_white else (60, 60, 70)
+        fg_color = (40, 40, 50) if is_white else (220, 220, 230)
+        outline_color = (20, 20, 30, 150)  # Semi-transparent outline
         
-        # Draw a circle for the piece
-        circle_radius = self.square_size // 2 - 4
-        circle_center = (self.square_size // 2, self.square_size // 2)
-        pygame.draw.circle(surface, bg_color, circle_center, circle_radius)
-        pygame.draw.circle(surface, fg_color, circle_center, circle_radius, 2)
+        # Add subtle shadow
+        shadow_radius = self.square_size // 2 - 3
+        shadow_center = (self.square_size // 2 + 2, self.square_size // 2 + 2)
+        pygame.draw.circle(surface, (0, 0, 0, 40), shadow_center, shadow_radius)
         
-        # Add the piece letter
-        font = pygame.font.SysFont('Arial', self.square_size // 2)
-        text = font.render(piece_type, True, fg_color)
-        text_rect = text.get_rect(center=circle_center)
-        surface.blit(text, text_rect)
+        # Draw the main piece body
+        center = (self.square_size // 2, self.square_size // 2)
+        radius = self.square_size // 2 - 5
+        
+        # Draw with anti-aliasing if possible
+        pygame.draw.circle(surface, bg_color, center, radius)
+        
+        # Add subtle gradient for 3D effect
+        for i in range(radius):
+            alpha = 10 - i * 10 / radius
+            if alpha > 0:
+                pygame.draw.circle(
+                    surface, 
+                    (255, 255, 255, int(alpha)) if is_white else (0, 0, 0, int(alpha)), 
+                    (center[0], center[1] - radius//4), 
+                    radius - i,
+                    1
+                )
+        
+        # Draw piece-specific details with more refined shapes
+        if piece_type.upper() == 'P':  # Pawn
+            # Draw a small circle for the head
+            head_radius = radius // 2.5
+            head_center = (center[0], center[1] - radius // 3)
+            pygame.draw.circle(surface, fg_color, head_center, head_radius)
+            pygame.draw.circle(surface, outline_color, head_center, head_radius, 1)
+            
+            # Draw a base
+            base_rect = pygame.Rect(
+                center[0] - radius // 2, 
+                center[1] + radius // 3, 
+                radius, 
+                radius // 2
+            )
+            pygame.draw.rect(surface, fg_color, base_rect, border_radius=radius//4)
+            pygame.draw.rect(surface, outline_color, base_rect, 1, border_radius=radius//4)
+        
+        elif piece_type.upper() == 'N':  # Knight
+            # Draw a more refined horse head shape
+            points = [
+                (center[0] - radius // 2, center[1] + radius // 2),  # Bottom left
+                (center[0] - radius // 4, center[1] - radius // 4),  # Middle left
+                (center[0] - radius // 2, center[1] - radius // 2),  # Top left
+                (center[0], center[1] - radius // 1.5),             # Top middle
+                (center[0] + radius // 3, center[1] - radius // 3),  # Top right
+                (center[0] + radius // 2, center[1] + radius // 4),  # Middle right
+                (center[0] + radius // 4, center[1] + radius // 2),  # Bottom right
+            ]
+            pygame.draw.polygon(surface, fg_color, points)
+            pygame.draw.polygon(surface, outline_color, points, 2)
+            
+            # Draw an eye
+            eye_pos = (center[0] - radius // 6, center[1] - radius // 6)
+            pygame.draw.circle(surface, outline_color, eye_pos, radius // 8)
+        
+        elif piece_type.upper() == 'B':  # Bishop
+            # Draw a bishop hat with smoother edges
+            points = [
+                (center[0] - radius // 2, center[1] + radius // 2),  # Bottom left
+                (center[0] - radius // 3, center[1]),                # Middle left
+                (center[0], center[1] - radius // 1.5),             # Top
+                (center[0] + radius // 3, center[1]),                # Middle right
+                (center[0] + radius // 2, center[1] + radius // 2),  # Bottom right
+            ]
+            pygame.draw.polygon(surface, fg_color, points)
+            pygame.draw.polygon(surface, outline_color, points, 2)
+            
+            # Draw a cross on top
+            pygame.draw.line(surface, outline_color, 
+                            (center[0], center[1] - radius // 1.5), 
+                            (center[0], center[1] - radius), 3)
+            pygame.draw.line(surface, outline_color, 
+                            (center[0] - radius // 6, center[1] - radius // 1.2), 
+                            (center[0] + radius // 6, center[1] - radius // 1.2), 2)
+        
+        elif piece_type.upper() == 'R':  # Rook
+            # Draw a castle tower with rounded corners
+            tower_rect = pygame.Rect(
+                center[0] - radius // 2, 
+                center[1] - radius // 2, 
+                radius, 
+                radius
+            )
+            pygame.draw.rect(surface, fg_color, tower_rect, border_radius=radius//8)
+            pygame.draw.rect(surface, outline_color, tower_rect, 2, border_radius=radius//8)
+            
+            # Draw battlements
+            for i in range(3):
+                x = center[0] - radius // 2 + (i * radius // 2)
+                battlement_rect = pygame.Rect(
+                    x, 
+                    center[1] - radius // 2 - radius // 6, 
+                    radius // 6, 
+                    radius // 6
+                )
+                pygame.draw.rect(surface, outline_color, battlement_rect, border_radius=2)
+        
+        elif piece_type.upper() == 'Q':  # Queen
+            # Draw a crown with smoother edges
+            crown_points = [
+                (center[0] - radius // 2, center[1] + radius // 4),  # Bottom left
+                (center[0] - radius // 2, center[1] - radius // 4),  # Middle left
+                (center[0] - radius // 4, center[1] - radius // 2),  # Top left
+                (center[0], center[1] - radius // 3),               # Top middle
+                (center[0] + radius // 4, center[1] - radius // 2),  # Top right
+                (center[0] + radius // 2, center[1] - radius // 4),  # Middle right
+                (center[0] + radius // 2, center[1] + radius // 4),  # Bottom right
+            ]
+            pygame.draw.polygon(surface, fg_color, crown_points)
+            pygame.draw.polygon(surface, outline_color, crown_points, 2)
+            
+            # Draw points on the crown
+            for i in range(3):
+                x = center[0] - radius // 3 + (i * radius // 3)
+                y = center[1] - radius // 2
+                pygame.draw.circle(surface, outline_color, (x, y), radius // 10)
+        
+        elif piece_type.upper() == 'K':  # King
+            # Draw a crown similar to queen but with different top
+            crown_points = [
+                (center[0] - radius // 2, center[1] + radius // 4),  # Bottom left
+                (center[0] - radius // 2, center[1] - radius // 4),  # Middle left
+                (center[0] - radius // 4, center[1] - radius // 2),  # Top left
+                (center[0], center[1] - radius // 3),               # Top middle
+                (center[0] + radius // 4, center[1] - radius // 2),  # Top right
+                (center[0] + radius // 2, center[1] - radius // 4),  # Middle right
+                (center[0] + radius // 2, center[1] + radius // 4),  # Bottom right
+            ]
+            pygame.draw.polygon(surface, fg_color, crown_points)
+            pygame.draw.polygon(surface, outline_color, crown_points, 2)
+            
+            # Draw a cross on top
+            pygame.draw.line(surface, outline_color, 
+                            (center[0], center[1] - radius // 2), 
+                            (center[0], center[1] - radius), 3)
+            pygame.draw.line(surface, outline_color, 
+                            (center[0] - radius // 4, center[1] - radius // 1.3), 
+                            (center[0] + radius // 4, center[1] - radius // 1.3), 2)
+        
+        else:
+            # Default: just add the letter with a nicer font
+            font = pygame.font.SysFont('Arial', self.square_size // 2, bold=True)
+            text = font.render(piece_type.upper(), True, fg_color)
+            text_rect = text.get_rect(center=center)
+            surface.blit(text, text_rect)
         
         return surface
     
